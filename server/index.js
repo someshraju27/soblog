@@ -23,9 +23,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
+console.log(process.env.Frontend_URL);
 
-
-app.use(cors({ origin: "http://localhost:3000" }));
+// console.log()
+app.use(cors({ origin: process.env.Frontend_URL, credentials: true }));
 
 app.use('/api', userRoutes);
 
