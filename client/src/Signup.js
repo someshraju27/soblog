@@ -10,130 +10,292 @@ const Signup = () => {
         password: "",
         profileImage: null
     });
+    const [errors, setErrors] = useState({
+        username: "",
+        email: "",
+        password: "",
+        profileImage: ""
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
 
-    // ✅ Handle input changes
+    // Validation rules
+    const validateField = (name, value) => {
+        let error = "";
+        
+        switch (name) {
+            case "username":
+                if (!value.trim()) {
+                    error = "Username is required";
+                } else if (value.length < 3) {
+                    error = "Username must be at least 3 characters";
+                } else if (value.length > 20) {
+                    error = "Username must be less than 20 characters";
+                } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+                    error = "Username can only contain letters, numbers and underscores";
+                }
+                break;
+                
+            case "email":
+                if (!value.trim()) {
+                    error = "Email is required";
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    error = "Please enter a valid email address";
+                }
+                break;
+                
+            case "password":
+                if (!value.trim()) {
+                    error = "Password is required";
+                } else if (value.length < 8) {
+                    error = "Password must be at least 8 characters";
+                } else if (!/[A-Z]/.test(value)) {
+                    error = "Password must contain at least one uppercase letter";
+                } else if (!/[a-z]/.test(value)) {
+                    error = "Password must contain at least one lowercase letter";
+                } else if (!/[0-9]/.test(value)) {
+                    error = "Password must contain at least one number";
+                } else if (!/[^A-Za-z0-9]/.test(value)) {
+                    error = "Password must contain at least one special character";
+                }
+                break;
+                
+            case "profileImage":
+                if (!value) {
+                    error = "Profile image is required";
+                } else if (value.size > 2 * 1024 * 1024) { // 2MB limit
+                    error = "Image size must be less than 2MB";
+                } else if (!['image/jpeg', 'image/png', 'image/gif'].includes(value.type)) {
+                    error = "Only JPEG, PNG or GIF images are allowed";
+                }
+                break;
+                
+            default:
+                break;
+        }
+        
+        return error;
+    };
+
+    // Handle input changes with validation
     const handleChange = (e) => {
-        if (e.target.name === "profileImage") {
-            setUserData({ ...userData, profileImage: e.target.files[0] });
+        const { name, value, files } = e.target;
+        
+        // Clear any existing error for this field
+        setErrors(prev => ({ ...prev, [name]: "" }));
+        
+        if (name === "profileImage") {
+            const file = files[0];
+            setUserData({ ...userData, profileImage: file });
+            
+            // Validate image immediately
+            const error = validateField(name, file);
+            setErrors(prev => ({ ...prev, [name]: error }));
         } else {
-            setUserData({ ...userData, [e.target.name]: e.target.value });
+            setUserData({ ...userData, [name]: value });
         }
     };
 
-    // ✅ Toggle password visibility
+    // Validate entire form
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { ...errors };
+        
+        // Validate each field
+        Object.keys(userData).forEach(key => {
+            const error = validateField(key, userData[key]);
+            newErrors[key] = error;
+            if (error) isValid = false;
+        });
+        
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    // Toggle password visibility
     const handlePasswordToggle = () => {
         setShowPassword(!showPassword);
     };
 
-    // ✅ Handle form submission
+    // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = new FormData();
-        data.append("username", userData.username);
-        data.append("email", userData.email);
-        data.append("password", userData.password);
-        data.append("profileImage", userData.profileImage);
-
+        setSubmitError("");
+        
+        if (!validateForm()) {
+            return;
+        }
+        
+        setIsSubmitting(true);
+        
         try {
+            const data = new FormData();
+            data.append("username", userData.username);
+            data.append("email", userData.email);
+            data.append("password", userData.password);
+            data.append("profileImage", userData.profileImage);
+
             const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/users`, data, {
                 headers: {
                     "Content-Type": "multipart/form-data"
                 }
             });
+            
             console.log("Signup successful", response.data);
             alert("Signup successful! You can now log in.");
+            
+            // Reset form on success
+            setUserData({
+                username: "",
+                email: "",
+                password: "",
+                profileImage: null
+            });
+            setErrors({
+                username: "",
+                email: "",
+                password: "",
+                profileImage: ""
+            });
+            
         } catch (err) {
-            console.error("Error:", err.message);
+            console.error("Error:", err);
+            let errorMessage = "Signup failed. Please try again.";
+            
+            if (err.response) {
+                if (err.response.status === 409) {
+                    errorMessage = err.response.data.message || "Username or email already exists";
+                } else {
+                    errorMessage = err.response.data.message || errorMessage;
+                }
+            }
+            
+            setSubmitError(errorMessage);
+        } finally {
+            setIsSubmitting(false);
         }
-
-        setUserData({
-            username: "",
-            email: "",
-            password: "",
-            profileImage: null
-        });
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-r from-black to-[#152246] flex items-center justify-center">
             <form className="bg-gray-900 text-white rounded-lg shadow-lg p-8 w-full max-w-md" onSubmit={handleSubmit}>
                 <h2 className="text-blue-500 text-3xl font-bold text-center mb-6">Sign Up</h2>
+                
+                {submitError && (
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4 rounded">
+                        {submitError}
+                    </div>
+                )}
 
-                {/* ✅ Username */}
-                <input
-                    type="text"
-                    name="username"
-                    value={userData.username}
-                    onChange={handleChange}
-                    placeholder="Username"
-                    className="w-full p-3 border border-gray-700 rounded bg-gray-800 text-white mb-4"
-                />
-
-                {/* ✅ Email */}
-                <input
-                    type="email"
-                    name="email"
-                    value={userData.email}
-                    onChange={handleChange}
-                    placeholder="Email"
-                    className="w-full p-3 border border-gray-700 rounded bg-gray-800 text-white mb-4"
-                />
-
-                {/* ✅ Password */}
-                <div className="relative mb-4">
+                {/* Username */}
+                <div className="mb-4">
                     <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        value={userData.password}
+                        type="text"
+                        name="username"
+                        value={userData.username}
                         onChange={handleChange}
-                        placeholder="Password"
-                        className="w-full p-3 border border-gray-700 rounded bg-gray-800 text-white"
+                        placeholder="Username"
+                        className={`w-full p-3 border rounded bg-gray-800 text-white ${
+                            errors.username ? "border-red-500" : "border-gray-700"
+                        }`}
                     />
-                    <span
-                        className="absolute right-3 top-3 cursor-pointer text-gray-500 hover:text-gray-300"
-                        onClick={handlePasswordToggle}
-                    >
-                         {showPassword ? (
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                className="w-5 h-5"
-                            >
-                                <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    strokeWidth="2" 
-                                    d="M13.875 18.825A10.97 10.97 0 0112 19c-4.418 0-8.418-2.64-10.125-6.56a1.012 1.012 0 010-.88C3.582 7.64 7.582 5 12 5c1.316 0 2.573.23 3.75.65M15 12a3 3 0 11-6 0 3 3 0 016 0zm0 0L21 21M3 3l6 6"
-                                />
-                            </svg>
-                        ) : (
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                className="w-5 h-5"
-                            >
-                                <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    strokeWidth="2" 
-                                    d="M12 4.5c-4.64 0-8.577 3.01-9.964 7.178a1.012 1.012 0 000 .639C3.423 16.49 7.36 19.5 12 19.5c4.64 0 8.577-3.01 9.964-7.178a1.012 1.012 0 000-.639C20.577 7.51 16.64 4.5 12 4.5zm0 11.25a3.75 3.75 0 110-7.5 3.75 3.75 0 010 7.5z"
-                                />
-                            </svg>
-                        )}
-                    </span>
+                    {errors.username && (
+                        <p className="text-red-400 text-sm mt-1">{errors.username}</p>
+                    )}
                 </div>
 
-                {/* ✅ Image Upload */}
+                {/* Email */}
+                <div className="mb-4">
+                    <input
+                        type="email"
+                        name="email"
+                        value={userData.email}
+                        onChange={handleChange}
+                        placeholder="Email"
+                        className={`w-full p-3 border rounded bg-gray-800 text-white ${
+                            errors.email ? "border-red-500" : "border-gray-700"
+                        }`}
+                    />
+                    {errors.email && (
+                        <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                    )}
+                </div>
+
+                {/* Password */}
+                <div className="mb-4">
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={userData.password}
+                            onChange={handleChange}
+                            placeholder="Password"
+                            className={`w-full p-3 border rounded bg-gray-800 text-white ${
+                                errors.password ? "border-red-500" : "border-gray-700"
+                            }`}
+                        />
+                        <span
+                            className="absolute right-3 top-3 cursor-pointer text-gray-500 hover:text-gray-300"
+                            onClick={handlePasswordToggle}
+                        >
+                            {showPassword ? (
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    className="w-5 h-5"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth="2" 
+                                        d="M13.875 18.825A10.97 10.97 0 0112 19c-4.418 0-8.418-2.64-10.125-6.56a1.012 1.012 0 010-.88C3.582 7.64 7.582 5 12 5c1.316 0 2.573.23 3.75.65M15 12a3 3 0 11-6 0 3 3 0 016 0zm0 0L21 21M3 3l6 6"
+                                    />
+                                </svg>
+                            ) : (
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    className="w-5 h-5"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth="2" 
+                                        d="M12 4.5c-4.64 0-8.577 3.01-9.964 7.178a1.012 1.012 0 000 .639C3.423 16.49 7.36 19.5 12 19.5c4.64 0 8.577-3.01 9.964-7.178a1.012 1.012 0 000-.639C20.577 7.51 16.64 4.5 12 4.5zm0 11.25a3.75 3.75 0 110-7.5 3.75 3.75 0 010 7.5z"
+                                    />
+                                </svg>
+                            )}
+                        </span>
+                    </div>
+                    {errors.password && (
+                        <p className="text-red-400 text-sm mt-1">{errors.password}</p>
+                    )}
+                    {!errors.password && userData.password && (
+                        <p className="text-green-400 text-sm mt-1">
+                            Password strength: {
+                                userData.password.length >= 12 ? 
+                                "Strong" : 
+                                userData.password.length >= 8 ? 
+                                "Medium" : 
+                                "Weak"
+                            }
+                        </p>
+                    )}
+                </div>
+
+                {/* Image Upload */}
                 <div className="mb-6">
                     <label className="block text-gray-400 font-medium mb-2">
                         Upload Profile Image
                     </label>
                     <div
-                        className="w-full border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-800 hover:bg-gray-700 transition-all duration-300"
+                        className={`w-full border-2 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-800 hover:bg-gray-700 transition-all duration-300 ${
+                            errors.profileImage ? "border-red-500" : "border-dashed border-gray-600"
+                        }`}
                         onClick={() => document.getElementById("fileInput").click()}
                     >
                         <input
@@ -145,11 +307,17 @@ const Signup = () => {
                             className="hidden"
                         />
                         {userData.profileImage ? (
-                            <img
-                                src={URL.createObjectURL(userData.profileImage)}
-                                alt="Profile Preview"
-                                className="w-24 h-24 object-cover rounded-full border border-gray-500 shadow-lg mb-2"
-                            />
+                            <>
+                                <img
+                                    src={URL.createObjectURL(userData.profileImage)}
+                                    alt="Profile Preview"
+                                    className="w-24 h-24 object-cover rounded-full border border-gray-500 shadow-lg mb-2"
+                                />
+                                <p className="text-sm text-gray-400">
+                                    {userData.profileImage.name} (
+                                    {(userData.profileImage.size / 1024).toFixed(1)} KB)
+                                </p>
+                            </>
                         ) : (
                             <div className="text-gray-400">
                                 <span className="text-xl">📷</span>
@@ -157,17 +325,23 @@ const Signup = () => {
                             </div>
                         )}
                     </div>
+                    {errors.profileImage && (
+                        <p className="text-red-400 text-sm mt-1">{errors.profileImage}</p>
+                    )}
                 </div>
 
-                {/* ✅ Signup Button */}
+                {/* Signup Button */}
                 <button
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded transition"
+                    disabled={isSubmitting}
+                    className={`w-full bg-blue-600 text-white font-bold py-3 rounded transition ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-500"
+                    }`}
                 >
-                    Sign Up
+                    {isSubmitting ? "Creating Account..." : "Sign Up"}
                 </button>
 
-                {/* ✅ Redirect to Login */}
+                {/* Redirect to Login */}
                 <p className="text-center text-gray-400 mt-4">
                     Already have an account?{' '}
                     <Link to="/login" className="text-blue-500 hover:underline">
