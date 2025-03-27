@@ -26,8 +26,8 @@ app.use('/uploads', express.static('uploads'));
 console.log(process.env.Frontend_URL);
 
 // console.log()
-// app.use(cors({ origin: process.env.Frontend_URL, credentials: true }));
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: process.env.Frontend_URL, credentials: true }));
+
 
 app.use('/api', userRoutes);
 
