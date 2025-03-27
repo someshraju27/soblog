@@ -114,9 +114,9 @@ const MyBlogs = () => {
 
       {/* Back to Home */}
       <div className="flex justify-center mt-12">
-        <Link to="/home" className="text-red-500 underline text-xl hover:text-red-400 transition">
-          Go back to Home Page
-        </Link>
+     <Link to="/home"  className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition" >
+                    Go back to Home Page
+                </Link>
       </div>
 
     </div>
