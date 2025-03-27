@@ -32,7 +32,7 @@ const Navigation = ( props ) => {
 <div className="h-[6rem] z-[9999] bg-customBlack fixed top-0 w-full">
         <div className="brand-logo absolute top-[1.7rem] left-[4rem] lg:top-2 lg:left-24">
         <div className="block md:inline bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600 font-bold text-5xl md:text-6xl lg:text-7xl sm:shadow-custom">
-  So Blog
+  SoBlog
   </div>
         </div>
         <nav className="navigator hidden lg:inline absolute top-1 right-28">
@@ -112,4 +112,3 @@ const Navigation = ( props ) => {
       }
 
 export default Navigation;
-

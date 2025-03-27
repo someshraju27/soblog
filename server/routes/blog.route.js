@@ -1,28 +1,31 @@
 const express = require('express');
-const upload = require('../uploadConfig'); 
+const { uploadBlogImage } = require("../cloudinaryConfig");
 const Blog = require('../models/Blogdata');
 const router = express.Router();
 const verifyAdmin  = require('../adminAuth');
 const nodemailer = require('nodemailer');
 const User = require('../models/Registeruser');
 
-router.post('/blog',upload.single('blogImage'),async (req,res)=>{
+router.post('/blog', uploadBlogImage.single("blogImage"), async (req, res) => {
     try{
         const {userId,blogTitle,blogContent,blogAuthor} = req.body;
 
         // Convert path to forward slashes for cross-platform support
-        const blogImagePath = req.file.path.replace(/\\/g, '/'); 
-    console.log(blogImagePath);
+        // const blogImagePath = req.file.path.replace(/\\/g, '/'); 
+ 
     
 
-        const fullImageUrl = `http://192.168.75.134:5000/${blogImagePath}`;
+        // const fullImageUrl = `${process.env.backend_url}/${blogImagePath}`;
+
+          // Get the Cloudinary image URL
+    const blogImage = req.file ? req.file.path : null;
 
         let newBlog = new Blog({
         userId,
           blogTitle,
           blogContent,
           blogAuthor,
-          blogImage:fullImageUrl
+          blogImage
         })
 
         await newBlog.save();
@@ -33,18 +36,6 @@ router.post('/blog',upload.single('blogImage'),async (req,res)=>{
 
     });
 
-router.get('/blog',async (req,res)=>{
-    try{
-        const blogs = await Blog.find({});
-        if(!blogs){
-            res.status(404).json({message:"NO blogs"});
-        }
-        res.status(200).json(blogs);
-    }
-    catch(err){
-        res.status(500).json({message:err.message});
-    }
-})
 
 router.get('/blog/:id',async (req,res)=>{
     try{
@@ -58,50 +49,52 @@ router.get('/blog/:id',async (req,res)=>{
         res.status(500).json({message:err.message});
     }
 })
-
-router.put("/blog/:id", upload.single("blogImage"), async (req, res) => {
+router.put("/blog/:id", uploadBlogImage.single("blogImage"), async (req, res) => {
     try {
-        const blog = await Blog.findById(req.params.id);
-        // console.log(blog);
-        if (!blog) {
-            return res.status(404).json({ message: "Blog not found" });
-        }
-
-        // Update text fields
-        if(req.body.blogTitle){
-        blog.blogTitle = req.body.blogTitle;
-        }
-        if(req.body.blogContent){
-        blog.blogContent = req.body.blogContent;
-        }
-        // Only update image if a new file is uploaded
-        
-        if (req.file) {
-            const blogImagePathInPut = req.file.path.replace(/\\/g, '/'); 
-            blog.blogImage = `http://192.168.75.134:5000/${blogImagePathInPut}`;
-        }
-
-        await blog.save();
-        res.json({ message: "Blog updated successfully", blog });
+      const blog = await Blog.findById(req.params.id);
+      if (!blog) {
+        return res.status(404).json({ message: "Blog not found" });
+      }
+  
+      const { blogTitle, blogContent } = req.body;
+      if (blogTitle) blog.blogTitle = blogTitle;
+      if (blogContent) blog.blogContent = blogContent;
+  
+      // Upload new image to Cloudinary
+      if (req.file) {
+        blog.blogImage = req.file.path;
+      }
+  
+      await blog.save();
+      res.status(200).json({ message: "Blog updated successfully", blog });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+      console.error("Error updating blog:", error);
+      res.status(500).json({ message: "Internal Server Error" });
     }
-});
+  });
+  router.delete("/blog/:id", async (req, res) => {
+    try {
+      const blog = await Blog.findById(req.params.id);
+      if (!blog) {
+        return res.status(404).json({ message: "Blog not found" });
+      }
+  
+      // Extract public_id from Cloudinary URL
+      const publicId = blog.blogImage.split("/").pop().split(".")[0];
+  
+      // Delete from Cloudinary
+      await cloudinary.uploader.destroy(publicId);
+  
+      await Blog.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: "Blog deleted successfully" });
+    } catch (err) {
+      console.error("Error deleting blog:", err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
 
 
-router.delete('/blog/:id',async (req,res)=>{
-    try{
-        const blog = await Blog.findByIdAndDelete(req.params.id);
-        if(!blog){
-            res.status(404).json({message:"Not found"});
-        }
-        res.status(200).json({message:"Deleted Successfully"});
-    }
-    catch(err){
-        res.status(500).json({message:err.message});
-    }
-})
-
+// Get all pending blogs
 router.get("/pending",  async (req, res) => {
     try {
         const pendingBlogs = await Blog.find({ status: "pending" }).populate("userId", "name email");
@@ -127,7 +120,7 @@ router.put("/:id/approve", verifyAdmin, async (req, res) => {
         
         const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, { status: "approved" }, { new: true });
      
-        console.log(updatedBlog);
+    
         
         if (!updatedBlog) {
             return res.status(404).json({ message: "Blog not found" });
@@ -140,7 +133,8 @@ router.put("/:id/approve", verifyAdmin, async (req, res) => {
             from: process.env.MY_EMAIL,
             to:email,
             subject: 'Blog Approved',
-            html: `<p>Your blog has been approved. You can view it <a href="http://192.168.75.134:3000/blog/${updatedBlog._id}">here</a>.</p>`
+          html: `<p>Your blog has been approved. You can view it <a href="${process.env.Frontend_URL}/blog/${updatedBlog._id}">here</a>.</p>`
+
         }
     await transporter.sendMail(mailOptions);
     res.json({ message: "Blog approved successfully", updatedBlog });
@@ -166,7 +160,7 @@ const mailOptions = {
     from:process.env.MY_EMAIL,
     to:email,
     subject:"Blog Rejected",
-    html:`<p>Your blog has been rejected. You can view it <a href="http://192.168.75.134:3000/blog/${updatedBlog._id}">here</a>.</p>`
+    html:`<p>Your blog has been rejected.</p>`
 }
  await transporter.sendMail(mailOptions);
  res.json({ message: "Blog rejected", updatedBlog });

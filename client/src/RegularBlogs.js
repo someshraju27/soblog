@@ -39,7 +39,7 @@ const RegularBlogs = () => {
     return (
         <div className='max-w-[90%] lg:max-w-[78rem] mx-auto mt-10 mb-10'>  
             {/* Heading */}
-            <h1 className='bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600 font-bold text-5xl md:text-6xl lg:text-6xl sm:shadow-custom mb-6 text-center lg:text-left'>
+            <h1 className='text-purple-600 font-bold text-5xl md:text-6xl lg:text-6xl sm:shadow-custom mb-6 text-center lg:text-left'>
                 Recent Posts
             </h1>
 

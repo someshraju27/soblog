@@ -1,11 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const User = require('../models/Registeruser'); 
-const upload = require('../uploadConfig'); 
+const { uploadProfileImage } = require("../cloudinaryConfig");
 const router = express.Router();
 
 // User registration route
-router.post('/users', upload.single('profileImage'), async (req, res) => {
+router.post('/users', uploadProfileImage.single("profileImage"), async (req, res) => {
   try {
     console.log("body",req.body);
 
@@ -18,10 +18,7 @@ router.post('/users', upload.single('profileImage'), async (req, res) => {
     // Hash the user's password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const userImagePath = req.file.path.replace(/\\/g, '/');
-    
-
-    const fullImageUrl = `http://192.168.75.134:5000/${userImagePath}`;
+    const profileImage = req.file ? req.file.path : null;
     // Handle file upload
     // const imagePath = req.file ? req.file.path : null;
 
@@ -31,7 +28,7 @@ router.post('/users', upload.single('profileImage'), async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      profileImage: fullImageUrl,  // Save the image path in the user document
+      profileImage,  // Save the image path in the user document
     });
 
     // Save user to database

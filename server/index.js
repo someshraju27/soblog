@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const mongoose = require('mongoose');
-const upload = require('./uploadConfig'); // Multer  config for handling file uploads
+const upload = require('./cloudinaryConfig'); // Multer  config for handling file uploads
 const path = require('path');
 const userRoutes = require('./routes/user.route');
 const blogRoutes = require('./routes/blog.route');
@@ -13,7 +13,7 @@ const cors = require('cors');
 
 const app = express();
 
-mongoose.connect("mongodb+srv://someshraju1527:someshraju271315@cluster0.kdfax.mongodb.net/P1").then(
+mongoose.connect(`mongodb+srv://someshraju1527:${process.env.MY_MONGODB_PASSWORD}@cluster0.kdfax.mongodb.net/P1`).then(
     ()=>console.log("MongoDB connected")
 );
 
@@ -26,7 +26,8 @@ app.use('/uploads', express.static('uploads'));
 console.log(process.env.Frontend_URL);
 
 // console.log()
-app.use(cors({ origin: process.env.Frontend_URL, credentials: true }));
+// app.use(cors({ origin: process.env.Frontend_URL, credentials: true }));
+app.use(cors({ origin: "http://localhost:3000" }));
 
 app.use('/api', userRoutes);
 

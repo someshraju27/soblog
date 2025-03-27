@@ -37,8 +37,8 @@ const TrendingBlogs = () => {
 
   return (
     <div className="relative w-full mt-[10rem] px-4 sm:px-8 md:px-12 lg:px-20 xl:px-32 overflow-visible">
-<h1 className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600 
-font-bold text-5xl md:text-6xl lg:text-6xl sm:shadow-custom mb-6 text-center mt-4">
+
+<h1 className="text-purple-600 font-bold text-5xl md:text-6xl lg:text-6xl sm:shadow-custom mb-6 text-center mt-4">
   Trending Blogs
 </h1>
 
