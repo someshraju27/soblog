@@ -78,7 +78,13 @@ const RegularBlogs = () => {
 
             {/* View More */}
             <div className="flex justify-end mt-6">
-                <Link to='/allblogs' className='text-red-700 underline'>View more -&gt;</Link>
+                          <Link 
+                    to="/allblogs" 
+                    className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition"
+                >
+                   View more -&gt;
+                </Link>
+            
             </div>
         </div>
     );
