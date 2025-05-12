@@ -16,3 +16,12 @@ html, body {
   height: 100%;
   /* overflow-y: auto; */
 }
+
+
+ .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hidden {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
