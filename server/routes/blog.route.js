@@ -179,4 +179,104 @@ router.get("/blog", async (req, res) => {
     }
 });
 
+
+router.put('/:id/like', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ error: 'Blog not found' });
+
+    // Ensure likes and dislikes are arrays
+    blog.likes = Array.isArray(blog.likes) ? blog.likes : [];
+    blog.dislikes = Array.isArray(blog.dislikes) ? blog.dislikes : [];
+
+    const userLikeIndex = blog.likes.indexOf(userId);
+    const userDislikeIndex = blog.dislikes.indexOf(userId);
+
+    if (userLikeIndex !== -1) {
+      // User already liked - remove the like
+      blog.likes.splice(userLikeIndex, 1);
+    } else {
+      // Add new like and remove dislike if exists
+      blog.likes.push(userId);
+      if (userDislikeIndex !== -1) {
+        blog.dislikes.splice(userDislikeIndex, 1);
+      }
+    }
+
+    await blog.save();
+    res.json({
+      ...blog.toObject(),
+      likes: blog.likes,
+      dislikes: blog.dislikes
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/:id/dislike', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ error: 'Blog not found' });
+
+    // Ensure likes and dislikes are arrays
+    blog.likes = Array.isArray(blog.likes) ? blog.likes : [];
+    blog.dislikes = Array.isArray(blog.dislikes) ? blog.dislikes : [];
+
+    const userDislikeIndex = blog.dislikes.indexOf(userId);
+    const userLikeIndex = blog.likes.indexOf(userId);
+
+    if (userDislikeIndex !== -1) {
+      // User already disliked - remove the dislike
+      blog.dislikes.splice(userDislikeIndex, 1);
+    } else {
+      // Add new dislike and remove like if exists
+      blog.dislikes.push(userId);
+      if (userLikeIndex !== -1) {
+        blog.likes.splice(userLikeIndex, 1);
+      }
+    }
+
+    await blog.save();
+    res.json({
+      ...blog.toObject(),
+      likes: blog.likes,
+      dislikes: blog.dislikes
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/trending', async (req, res) => {
+  try {
+    // Get blogs sorted by likes (descending) and limit to 9
+    const blogs = await Blog.find({})
+      .sort({ likes: -1})
+      .limit(9)
+
+    res.status(200).json({
+      success: true,
+      count: blogs.length,
+      data: blogs
+    });
+  } catch (error) {
+    console.error('Error in /trending:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch trending blogs',
+      message: error.message
+    });
+  }
+});
+
+
 module.exports = router;
