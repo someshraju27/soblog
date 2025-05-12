@@ -47,34 +47,73 @@ const Navigation = ( props ) => {
         <div className="profile absolute top-6 right-4 lg:top-4 lg:right-8 cursor-pointer">
             <img src={image} className="rounded-full w-[3.3rem] h-[3.3rem] lg:w-[4rem] lg:h-[4rem]" alt="no profile" onClick={getProfile}/>  
         </div>
-       {profile &&  <div className="profile-container absolute top-12 right-4 p-4 rounded bg-black bg-opacity-50 z-10" id="my-profile">
-            <div className="profile-details mb-4">
-                <div className="profile-image flex justify-center"><img src={image} alt="User Profile Image"  width="50px" height="50px" className="rounded-full" /></div> 
-                <div className="profile-user-name text-md lg:text-xl flex justify-center font-bold text-white">{name}</div> 
-                <div className="profile-user-mail text-sm flex justify-centert text-white mb-2 lg:mb-6">{email}</div> 
-             { role=="admin"? <Link to={'/admin'} className='text-white border-1 z-10 p-2 ml-8 mb-2 border-2 border-gray-400 transition ease-out duration-300 block'>Admin Panel</Link>
-               : " "}  <Link to={`/myblogs/${id}`} className='text-white border-1 z-10 p-2 ml-14 lg:ml-10 hover:border-2 lg:mb-8 border-gray-400 transition ease-out duration-300'>MyBlogs</Link>
-                <svg
-  className="w-6 absolute top-0 right-2 mt-2 text-white cursor-pointer transition ease-out duration-300"
-  xmlns="http://www.w3.org/2000/svg"
-  fill="none"
-  viewBox="0 0 24 24"
-  strokeWidth="1.5"
-  stroke="currentColor"
-  onClick={handleCloseProfile}
->
-  <path
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-  />
-</svg>
+      {profile && (
+  <div
+    className="profile-container absolute top-12 right-4 w-64 p-4 rounded-xl bg-black bg-opacity-70 backdrop-blur-sm shadow-lg z-[10000]"
+    id="my-profile"
+  >
+    {/* Close Button */}
+    <button
+      aria-label="Close profile"
+      onClick={handleCloseProfile}
+      className="absolute top-2 right-2 text-white hover:text-red-400 transition"
+    >
+      <svg
+        className="w-6 h-6"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+        />
+      </svg>
+    </button>
 
-                  
-            </div>
-            <div className="flex justify-center m-1"><button className="profile-lgbtn rounded-lg text-base p-2 bg-customPurple text-white hover:border-2 border-gray-400 transition ease-out duration-300"onClick={handleLogout}>Logout</button></div>
-        </div>}
-        </div>
+    {/* Profile Info */}
+    <div className="flex flex-col items-center space-y-2 mb-4">
+      <img
+        src={image}
+        alt="User Profile"
+        className="w-16 h-16 rounded-full object-cover"
+      />
+      <h2 className="text-lg font-semibold text-white">{name}</h2>
+      <p className="text-sm text-gray-200">{email}</p>
+    </div>
+
+    {/* Links */}
+    <div className="flex flex-col space-y-2">
+      {role === "admin" && (
+        <Link
+          to="/admin"
+          className="text-white text-center py-2 px-4 rounded border border-gray-400 hover:bg-gray-800 transition"
+        >
+          Admin Panel
+        </Link>
+      )}
+      <Link
+        to={`/myblogs/${id}`}
+        className="text-white text-center py-2 px-4 rounded border border-gray-400 hover:bg-gray-800 transition"
+      >
+        My Blogs
+      </Link>
+    </div>
+
+    {/* Logout */}
+    <div className="flex justify-center mt-4">
+      <button
+        className="rounded-lg text-base px-6 py-2 bg-purple-700 text-white hover:bg-purple-800 transition border border-gray-400"
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+)}        </div>
 
        <div className="block fixed top-8 left-4 lg:hidden z-[100000]" onClick={responsiveNav}>
         <button id="menu-toggle" className="focus:outline-none text-white">
