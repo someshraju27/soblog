@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +19,7 @@ const Signup = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
-
+    const navigate = useNavigate();
     // Validation rules
     const validateField = (name, value) => {
         let error = "";
@@ -143,7 +144,7 @@ const Signup = () => {
             
             console.log("Signup successful", response.data);
             alert("Signup successful! You can now log in.");
-            
+               navigate("/login");
             // Reset form on success
             setUserData({
                 username: "",
